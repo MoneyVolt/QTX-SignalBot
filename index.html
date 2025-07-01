@@ -59,6 +59,77 @@
             border-radius: 15px;
             border: 1px solid var(--border-color);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative; /* Needed for overlay */
+            overflow: hidden; /* Hide parts of overlay that go outside */
+        }
+        
+        /* --- Verification Popup (New) --- */
+        #verificationOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(42, 42, 78, 0.95); /* Semi-transparent version of container bg */
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        #verificationPopup {
+            text-align: center;
+            width: 100%;
+        }
+
+        #verificationPopup h2 {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        
+        #verificationPopup input {
+             width: 100%;
+             padding: 12px;
+             box-sizing: border-box;
+             border-radius: 8px;
+             border: 1px solid var(--border-color);
+             background-color: #1e1e3f;
+             color: var(--text-color);
+             font-family: 'Poppins', sans-serif;
+             margin-bottom: 20px;
+             text-align: center;
+        }
+
+        #verificationPopup button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: transform 0.2s ease;
+        }
+
+        #verificationPopup button:disabled {
+             background: var(--neutral-color);
+             cursor: not-allowed;
+        }
+
+        #verificationStatus {
+            margin-top: 15px;
+            min-height: 20px;
+            font-size: 0.9em;
+        }
+        
+        #verificationStatus a {
+            color: var(--secondary-accent);
+            text-decoration: underline;
         }
 
         h1 {
@@ -128,6 +199,16 @@
 <body>
 
     <div class="container">
+        <!-- Verification Popup (New) -->
+        <div id="verificationOverlay">
+            <div id="verificationPopup">
+                <h2>Account Verification</h2>
+                <input type="text" id="traderIdInput" placeholder="Enter Your Trading ID">
+                <button id="checkIdBtn">Check ID</button>
+                <div id="verificationStatus"></div>
+            </div>
+        </div>
+        
         <h1>SD302 QX pro BOt <sup>PRO</sup></h1>
 
         <div class="control-group">
@@ -185,6 +266,103 @@
     <canvas id="imageCanvas"></canvas>
 
     <script>
+        // --- START OF NEW VERIFICATION LOGIC ---
+        const verificationOverlay = document.getElementById('verificationOverlay');
+        const traderIdInput = document.getElementById('traderIdInput');
+        const checkIdBtn = document.getElementById('checkIdBtn');
+        const verificationStatus = document.getElementById('verificationStatus');
+        
+        // IMPORTANT: Replace this with your actual Replit backend URL
+        const REPLIT_BACKEND_URL = 'https://YOUR_REPLIT_PROJECT_NAME.replit.dev/verify-trader';
+        
+        // This is your affiliate link
+        const AFFILIATE_LINK = 'https://broker-qx.pro/sign-up/fast/?lid=1285131'; 
+
+        // Function to check if user is already verified
+        function checkLocalStorage() {
+            const verifiedId = localStorage.getItem('verifiedTraderId');
+            if (verifiedId) {
+                // If verified, hide the popup immediately
+                verificationOverlay.style.display = 'none';
+            }
+        }
+
+        checkIdBtn.addEventListener('click', async () => {
+            const traderId = traderIdInput.value.trim();
+            if (!traderId) {
+                verificationStatus.textContent = "Please enter a valid Trading ID.";
+                verificationStatus.style.color = 'var(--warning-color)';
+                return;
+            }
+
+            checkIdBtn.disabled = true;
+            traderIdInput.disabled = true;
+            verificationStatus.style.color = 'var(--text-color)';
+            verificationStatus.textContent = "Please wait, checking your ID...";
+
+            try {
+                const response = await fetch(`${REPLIT_BACKEND_URL}?id=${traderId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                }
+                
+                const data = await response.json(); // Expecting { status: '...', message: '...' }
+
+                handleVerificationResponse(data, traderId);
+
+            } catch (error) {
+                console.error("Verification error:", error);
+                verificationStatus.textContent = "Error checking ID. Please try again later.";
+                verificationStatus.style.color = 'var(--danger-color)';
+                checkIdBtn.disabled = false;
+                traderIdInput.disabled = false;
+            }
+        });
+
+        function handleVerificationResponse(data, traderId) {
+            verificationStatus.style.color = 'var(--text-color)'; // Reset color
+            
+            switch(data.status) {
+                case 'approved':
+                    verificationStatus.style.color = 'var(--success-color)';
+                    verificationStatus.textContent = "Verification successful! Access granted.";
+                    // Save to local storage so user doesn't have to verify again
+                    localStorage.setItem('verifiedTraderId', traderId);
+                    // Hide the popup after a short delay
+                    setTimeout(() => {
+                        verificationOverlay.style.display = 'none';
+                    }, 1500);
+                    break;
+                    
+                case 'deposit_pending':
+                    verificationStatus.style.color = 'var(--warning-color)';
+                    verificationStatus.innerHTML = `Account found, but no deposit has been made. Please deposit to continue.`;
+                    break;
+
+                case 'not_affiliated':
+                    verificationStatus.style.color = 'var(--danger-color)';
+                    verificationStatus.innerHTML = `This ID is not registered with our affiliate link. Please <a href="${AFFILIATE_LINK}" target="_blank">create a new account</a> using our link.`;
+                    break;
+                
+                default: // Handles 'invalid_id' or any other error from backend
+                    verificationStatus.style.color = 'var(--danger-color)';
+                    verificationStatus.textContent = data.message || "Invalid Trading ID. Please check and try again.";
+                    break;
+            }
+
+            // Re-enable the button unless approved
+            if (data.status !== 'approved') {
+                checkIdBtn.disabled = false;
+                traderIdInput.disabled = false;
+            }
+        }
+        
+        // Run the check when the page loads
+        document.addEventListener('DOMContentLoaded', checkLocalStorage);
+        // --- END OF NEW VERIFICATION LOGIC ---
+
+
         // --- ALL JAVASCRIPT LOGIC FOR THE BOT REMAINS UNCHANGED ---
         const screenshotUpload = document.getElementById('screenshotUpload');
         const timeframeSelect = document.getElementById('timeframeSelect');
