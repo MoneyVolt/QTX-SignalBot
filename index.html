@@ -1,4 +1,200 @@
-    <!-- Yeh Naya aur Bilkul Theek Kiya Hua Script Block Hai -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Core (OpenAI Edition)</title>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap');
+
+        :root {
+            --bg-color: #0a0a14;
+            --panel-bg: rgba(20, 20, 40, 0.7);
+            --accent-color: #ff0055;
+            --accent-glow: rgba(255, 0, 85, 0.6);
+            --text-color: #c0c0e0;
+            --border-color: #3a3854;
+            --green-color: #00ff9b;
+            --red-color: #ff1f1f;
+            --yellow-color: #ffd60a;
+            --cyan-color: #00ffff;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --clip-path-box: polygon(0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px));
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(circle at center, rgba(30,30,60,0.4), transparent 60%),
+                linear-gradient(var(--border-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .main-interface {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 10px; width: 100%; max-width: 450px; position: relative;
+        }
+
+        .connector-lines-svg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 5;
+        }
+        .connector-line {
+            fill: none; stroke-width: 2.5px; stroke-linecap: round;
+            opacity: 0; transition: opacity 0.5s;
+        }
+        #line-upload-to-core { stroke: var(--green-color); }
+        #line-time-to-core { stroke: var(--red-color); }
+        #line-core-to-execute { stroke: var(--yellow-color); }
+        
+        @keyframes draw-line { to { stroke-dashoffset: 0; } }
+        .line-active { opacity: 1; animation: draw-line 0.8s ease-out forwards; }
+
+        @keyframes color-cycle {
+            0% { stroke: var(--red-color); } 33% { stroke: var(--green-color); }
+            66% { stroke: var(--yellow-color); } 100% { stroke: var(--red-color); }
+        }
+        @keyframes flicker-connect { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .analyzing .connector-line {
+            animation: color-cycle 0.5s linear infinite, flicker-connect 0.2s steps(1, end) infinite;
+        }
+
+        @keyframes pulseAndShake {
+            0%, 100% { transform: scale(1) translate(0, 0); }
+            25% { transform: scale(1.05) translate(2px, -2px); }
+            50% { transform: scale(0.95) translate(-2px, 2px); }
+            75% { transform: scale(1.02) translate(1px, -1px); }
+        }
+        .analyzing #ai-bot-image { animation: pulseAndShake 0.4s infinite; }
+        
+        .dashboard-header, .top-controls, #ai-core-panel, #generate-panel { z-index: 10; }
+
+        .dashboard-header {
+            width: 100%; text-align: center; font-family: 'Orbitron', sans-serif;
+            font-size: 2em; color: var(--accent-color);
+            text-shadow: 0 0 15px var(--accent-glow); letter-spacing: 3px; margin-bottom: 5px;
+        }
+
+        .top-controls { display: flex; justify-content: space-between; width: 100%; gap: 15px; }
+
+        .control-panel {
+            background: var(--panel-bg); padding: 15px; border: 1px solid var(--border-color);
+            clip-path: var(--clip-path-box); width: 48%; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .control-panel label { display: block; margin-bottom: 10px; font-size: 1em; font-weight: 700; text-transform: uppercase; }
+
+        input[type="file"], select {
+            width: 100%; padding: 8px; box-sizing: border-box;
+            border: 1px solid var(--border-color); background-color: var(--bg-color);
+            color: var(--text-color); font-family: 'Rajdhani', sans-serif; font-size: 0.9em;
+            clip-path: var(--clip-path-box);
+        }
+        input[type="file"]::file-selector-button { font-weight: bold; color: var(--text-color); background: var(--accent-color); padding: 5px 8px; border: none; cursor: pointer; }
+
+        #ai-core-panel { padding: 10px 0; position: relative; }
+        #ai-bot-image { width: 140px; height: auto; position: relative; transition: transform 0.3s, filter 0.3s; }
+
+        #ai-core-panel::before, #ai-core-panel::after {
+            content: ''; position: absolute; top: 10%; height: 80%; width: 8px;
+            opacity: 0; transition: opacity 0.3s;
+            background: linear-gradient( to bottom, transparent, var(--cyan-color), var(--green-color), var(--accent-color), transparent );
+            background-size: 100% 400%;
+            filter: drop-shadow(0 0 5px var(--cyan-color)) drop-shadow(0 0 10px var(--accent-color));
+        }
+        #ai-core-panel::before { left: -20px; }
+        #ai-core-panel::after { right: -20px; }
+        
+        @keyframes data-flow {
+            from { background-position: 0 100%; }
+            to { background-position: 0 -100%; }
+        }
+        .analyzing #ai-core-panel::before, .analyzing #ai-core-panel::after {
+            opacity: 1;
+            animation: data-flow 1.5s linear infinite;
+        }
+
+        #generate-panel { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        #analysis-status { color: var(--yellow-color); height: 20px; font-size: 1.1em; opacity: 0; transition: opacity 0.3s; text-align: center; }
+        .analyzing #analysis-status { opacity: 1; }
+
+        #getSignalBtn, #result-panel { clip-path: var(--clip-path-box); border: 1px solid var(--border-color); }
+        #getSignalBtn {
+            width: 60%; padding: 15px; font-size: 1.2em; font-weight: bold;
+            color: white; background: var(--accent-color); cursor: pointer;
+            border: 1px solid var(--accent-glow); transition: all 0.2s ease;
+            box-shadow: 0 0 20px var(--accent-glow); text-transform: uppercase;
+        }
+        #getSignalBtn:disabled { background: var(--border-color); cursor: not-allowed; box-shadow: none; color: #888; }
+        #result-panel {
+            width: 100%; background: var(--panel-bg); padding: 20px;
+            text-align: center; font-size: 1.5em; font-weight: 700;
+            min-height: 60px; display: flex; justify-content: center; align-items: center;
+            transition: background-color 0.5s, color 0.5s;
+        }
+        canvas { display: none; }
+        
+        @media (max-width: 400px) {
+            .dashboard-header { font-size: 1.5em; }
+            .control-panel label { font-size: 0.8em; }
+            #result-panel { font-size: 1.2em; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-interface">
+        <svg class="connector-lines-svg">
+            <path id="line-upload-to-core" class="connector-line" d="M0,0" />
+            <path id="line-time-to-core" class="connector-line" d="M0,0" />
+            <path id="line-core-to-execute" class="connector-line" d="M0,0" />
+        </svg>
+
+        <div class="dashboard-header">SIGNAL CORE</div>
+
+        <div class="top-controls">
+            <div id="upload-panel" class="control-panel">
+                <label for="screenshotUpload">Data Input</label>
+                <input type="file" id="screenshotUpload" accept="image/png, image/jpeg">
+            </div>
+            <div id="timeframe-panel" class="control-panel">
+                <label for="timeframeSelect">Timeframe</label>
+                <select id="timeframeSelect">
+                    <option value="">-- SET --</option>
+                    <option value="1">1 Min</option>
+                    <option value="5">5 Min</option>
+                    <option value="15">15 Min</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="ai-core-panel">
+            <img id="ai-bot-image" src="https://i.imgur.com/uSFTJ5h.png" alt="AI Bot Core">
+        </div>
+
+        <div id="generate-panel">
+            <div id="analysis-status"></div>
+            <button id="getSignalBtn" disabled>EXECUTE</button>
+            <div id="result-panel" role="alert">Awaiting Directive...</div>
+        </div>
+    </div>
+
+    <canvas id="imageCanvas"></canvas>
+    <audio id="hackingSound" src="https://www.myinstants.com/media/sounds/cod-mw2-sonar.mp3" loop></audio>
+
     <script>
         // --- UI ELEMENTS ---
         const mainInterface = document.querySelector('.main-interface');
@@ -120,19 +316,21 @@
             resultPanel.style.color = textColor;
         }
 
+        // --- NEW OPENAI SIGNAL GENERATION LOGIC ---
+
         async function getOpenAISignal() {
-            // !!! AAPKO APNI NAYI WALI KEY YAHAN DAALNI HAI !!!
+            // !!! IMPORTANT: REPLACE WITH YOUR OWN KEY !!!
             const apiKey = "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";
             
-            // Yeh if condition sirf check karne ke liye hai, key yahan nahi likhni
-            if (apiKey === "YOUR_NEW_API_KEY_HERE") {
+            if (apiKey === "YOUR_OPENAI_API_KEY_HERE") {
                 console.error("OpenAI API Key is not set.");
-                alert("ERROR: OpenAI API Key script mein nahi daali gayi.");
+                alert("ERROR: OpenAI API Key is missing. Please add your key to the script.");
                 return "HOLD";
             }
             
             const apiURL = 'https://api.openai.com/v1/chat/completions';
 
+            // We create a very specific prompt to get a clean answer.
             const prompt = `Analyze the current market sentiment for a generic currency pair for a ${timeframeSelect.value} minute binary options trade. Consider common technical indicators like RSI, MACD, and moving averages. Based on this hypothetical analysis, what is the most likely direction?`;
 
             const requestBody = {
@@ -163,27 +361,25 @@
 
                 if (!response.ok) {
                     console.error("OpenAI API Error:", response.status, response.statusText);
-                    const errorData = await response.json();
-                    if(errorData.error && errorData.error.message.includes("You exceeded your current quota")){
-                        alert("ERROR: Aapke OpenAI account ke credits khatam ho gaye hain. Please check your billing details.");
-                    } else {
-                        alert("ERROR: OpenAI se error mila. Details console mein check karein.");
-                    }
-                    return "HOLD";
+                    return "HOLD"; // Default to HOLD on error
                 }
 
                 const data = await response.json();
                 let signal = data.choices[0].message.content.trim().toUpperCase();
 
+                // Ensure the response is one of the valid signals
                 if (['UP', 'DOWN', 'HOLD'].includes(signal)) {
                     return signal;
                 } else {
-                    return "HOLD";
+                    return "HOLD"; // Default if the AI gives an unexpected response
                 }
 
             } catch (error) {
                 console.error("Error calling OpenAI API:", error);
-                return "HOLD";
+                return "HOLD"; // Default to HOLD on network error
             }
         }
+
     </script>
+</body>
+</html>
