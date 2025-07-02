@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signal Core (Real Image Analysis)</title>
+    <title>Signal Core (Advanced Debugging)</title>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap');
@@ -196,7 +196,6 @@
     <audio id="hackingSound" src="https://www.myinstants.com/media/sounds/cod-mw2-sonar.mp3" loop></audio>
 
     <script>
-        // --- UI ELEMENTS ---
         const mainInterface = document.querySelector('.main-interface');
         const screenshotUpload = document.getElementById('screenshotUpload');
         const timeframeSelect = document.getElementById('timeframeSelect');
@@ -210,147 +209,75 @@
         let isTimeSelected = false;
         let imageBase64Data = null;
 
-        // --- UI AND ANIMATION FUNCTIONS ---
-        function setLineLength(line) {
-            const length = line.getTotalLength();
-            line.style.strokeDasharray = length;
-            line.style.strokeDashoffset = length;
-        }
-
+        function setLineLength(line) { const length = line.getTotalLength(); line.style.strokeDasharray = length; line.style.strokeDashoffset = length; }
         function updateConnectorLines() {
             const getCoords = (el, side = 'center') => {
-                const elRect = el.getBoundingClientRect();
-                const containerRect = mainInterface.getBoundingClientRect();
-                const x = elRect.left - containerRect.left + elRect.width / 2;
-                let y;
+                const elRect = el.getBoundingClientRect(); const containerRect = mainInterface.getBoundingClientRect();
+                const x = elRect.left - containerRect.left + elRect.width / 2; let y;
                 if (side === 'top') y = elRect.top - containerRect.top;
                 else if (side === 'bottom') y = elRect.top - containerRect.top + elRect.height;
                 else y = elRect.top - containerRect.top + elRect.height / 2;
                 return { x, y };
             };
-            
             const uploadPoint = getCoords(document.getElementById('upload-panel'), 'bottom');
             const timePoint = getCoords(document.getElementById('timeframe-panel'), 'bottom');
             const coreTopPoint = getCoords(document.getElementById('ai-core-panel'), 'top');
             const coreBottomPoint = getCoords(document.getElementById('ai-core-panel'), 'bottom');
             const executePoint = getCoords(getSignalBtn, 'top');
-            
             lineUpload.setAttribute('d', `M ${uploadPoint.x},${uploadPoint.y} V ${coreTopPoint.y}`);
             lineTime.setAttribute('d', `M ${timePoint.x},${timePoint.y} V ${coreTopPoint.y}`);
             lineExecute.setAttribute('d', `M ${coreBottomPoint.x},${coreBottomPoint.y} V ${executePoint.y}`);
-            
             [lineUpload, lineTime, lineExecute].forEach(setLineLength);
         }
-
         window.addEventListener('DOMContentLoaded', updateConnectorLines);
         window.addEventListener('resize', updateConnectorLines);
-        
-        function resetLines() {
-            lineUpload.classList.remove('line-active');
-            lineTime.classList.remove('line-active');
-            lineExecute.classList.remove('line-active');
-        }
-
-        function checkFormCompletion() {
-            getSignalBtn.disabled = !(isImageReady && isTimeSelected);
-            lineExecute.classList.toggle('line-active', isImageReady && isTimeSelected);
-        }
-
+        function resetLines() { lineUpload.classList.remove('line-active'); lineTime.classList.remove('line-active'); lineExecute.classList.remove('line-active'); }
+        function checkFormCompletion() { getSignalBtn.disabled = !(isImageReady && isTimeSelected); lineExecute.classList.toggle('line-active', isImageReady && isTimeSelected); }
         screenshotUpload.addEventListener('change', (event) => {
-            resetLines();
-            const file = event.target.files[0];
-            isImageReady = !!file;
-            imageBase64Data = null;
-
+            resetLines(); const file = event.target.files[0]; isImageReady = !!file; imageBase64Data = null;
             if (isImageReady) {
                 lineUpload.classList.add('line-active');
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    imageBase64Data = e.target.result;
-                    checkFormCompletion();
-                };
+                reader.onload = (e) => { imageBase64Data = e.target.result; checkFormCompletion(); };
                 reader.readAsDataURL(file);
             }
-            
-            timeframeSelect.value = "";
-            isTimeSelected = false;
-            if (!file) { checkFormCompletion(); return; }
+            timeframeSelect.value = ""; isTimeSelected = false; if (!file) { checkFormCompletion(); return; }
         });
-
-        timeframeSelect.addEventListener('change', () => {
-            isTimeSelected = !!timeframeSelect.value;
-            lineTime.classList.toggle('line-active', isTimeSelected);
-            checkFormCompletion();
-        });
-
+        timeframeSelect.addEventListener('change', () => { isTimeSelected = !!timeframeSelect.value; lineTime.classList.toggle('line-active', isTimeSelected); checkFormCompletion(); });
         getSignalBtn.addEventListener('click', async () => {
-            getSignalBtn.disabled = true;
-            mainInterface.classList.add('analyzing');
+            getSignalBtn.disabled = true; mainInterface.classList.add('analyzing');
             document.getElementById('analysis-status').textContent = "AI CORE ANALYZING IMAGE...";
             hackingSound.play();
-            
             const signal = await getOpenAISignal(imageBase64Data);
-
-            mainInterface.classList.remove('analyzing');
-            document.getElementById('analysis-status').textContent = "";
-            hackingSound.pause();
-            hackingSound.currentTime = 0;
-            
-            displaySignal(signal);
-            checkFormCompletion();
+            mainInterface.classList.remove('analyzing'); document.getElementById('analysis-status').textContent = "";
+            hackingSound.pause(); hackingSound.currentTime = 0;
+            displaySignal(signal); checkFormCompletion();
         });
-        
         function displaySignal(type) {
-            resetLines();
-            const resultPanel = document.getElementById('result-panel');
-            const timeframeText = `${timeframeSelect.value} Min`;
+            resetLines(); const resultPanel = document.getElementById('result-panel'); const timeframeText = `${timeframeSelect.value} Min`;
             let message = '', bgColor = 'var(--panel-bg)', textColor = 'var(--text-color)';
             switch(type) {
-                case 'UP':
-                    message = `SIGNAL: UP ▲ | ${timeframeText}`;
-                    bgColor = 'var(--success-color)'; textColor = '#fff'; break;
-                case 'DOWN':
-                    message = `SIGNAL: DOWN ▼ | ${timeframeText}`;
-                    bgColor = 'var(--danger-color)'; textColor = '#fff'; break;
-                case 'HOLD':
-                default:
-                    message = 'MARKET STABLE | HOLD';
-                    bgColor = 'var(--yellow-color)'; textColor = '#0d0c1d'; break;
+                case 'UP': message = `SIGNAL: UP ▲ | ${timeframeText}`; bgColor = 'var(--success-color)'; textColor = '#fff'; break;
+                case 'DOWN': message = `SIGNAL: DOWN ▼ | ${timeframeText}`; bgColor = 'var(--danger-color)'; textColor = '#fff'; break;
+                case 'HOLD': default: message = 'MARKET STABLE | HOLD'; bgColor = 'var(--yellow-color)'; textColor = '#0d0c1d'; break;
             }
-            resultPanel.textContent = message;
-            resultPanel.style.backgroundColor = bgColor;
-            resultPanel.style.color = textColor;
+            resultPanel.textContent = message; resultPanel.style.backgroundColor = bgColor; resultPanel.style.color = textColor;
         }
 
-        // --- REAL IMAGE ANALYSIS LOGIC ---
         async function getOpenAISignal(base64Image) {
-            // !!! AAPKO APNI NAYI WALI KEY YAHAN DAALNI HAI !!!
-            const apiKey = "sk-proj-IqEgjgqDhuRdlgWBr4__SqL_PWZf0IfP_cuJatKtaVSk80GVrAGAQHMdTt7vPmXmj2vQzgjtowT3BlbkFJb3woXowVW2NbxjPjksY3AOhilTrsZR_NE5vJDE1z1FpA95VXt8khOMHf8b1KSie5rM4uIrs74AE";
+            const apiKey = "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";
             
             if (apiKey === "YOUR_NEW_API_KEY_HERE") {
                 alert("ERROR: OpenAI API Key script mein nahi daali gayi.");
                 return "HOLD";
             }
-            
-            if (!base64Image) {
-                alert("ERROR: Image data nahi mila.");
-                return "HOLD";
-            }
+            if (!base64Image) { alert("ERROR: Image data nahi mila."); return "HOLD"; }
 
             const apiURL = 'https://api.openai.com/v1/chat/completions';
             const prompt = `Analyze the attached trading chart screenshot. Based on the visible candlesticks, trend, and structure, predict the most likely market direction for the next ${timeframeSelect.value} minute(s). You must only respond with one of three words: UP, DOWN, or HOLD. Do not provide any explanation, extra text, or punctuation.`;
-
             const requestBody = {
                 model: "gpt-4-turbo",
-                messages: [
-                    {
-                        "role": "user",
-                        "content": [
-                            { "type": "text", "text": prompt },
-                            { "type": "image_url", "image_url": { "url": base64Image } }
-                        ]
-                    }
-                ],
+                messages: [ { "role": "user", "content": [ { "type": "text", "text": prompt }, { "type": "image_url", "image_url": { "url": base64Image } } ] } ],
                 max_tokens: 5
             };
 
@@ -363,25 +290,26 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    if(errorData.error && errorData.error.message.includes("You exceeded your current quota")){
-                        alert("ERROR: Aapke OpenAI account ke credits khatam ho gaye hain. Please check your billing details.");
-                    } else {
-                        alert("ERROR: OpenAI se error mila. Details console mein check karein.");
+                    let errorMessage = "OpenAI se ajeeb error mila. Details console mein check karein.";
+                    if (errorData.error && errorData.error.message) {
+                        if (errorData.error.message.includes("You exceeded your current quota")) {
+                            errorMessage = "ERROR: Aapke OpenAI account ke credits khatam ho gaye hain. Please check your billing details.";
+                        } else if (errorData.error.code === 'invalid_api_key') {
+                            errorMessage = "ERROR: API Key ghalat hai ya kaam nahi kar rahi. Ek nayi key bana kar check karein.";
+                        } else {
+                            errorMessage = `OpenAI Error: ${errorData.error.message}`;
+                        }
                     }
+                    alert(errorMessage);
                     return "HOLD";
                 }
 
                 const data = await response.json();
                 let signal = data.choices[0].message.content.trim().toUpperCase().replace('.', '');
-
-                if (['UP', 'DOWN', 'HOLD'].includes(signal)) {
-                    return signal;
-                } else {
-                    return "HOLD";
-                }
-
+                if (['UP', 'DOWN', 'HOLD'].includes(signal)) { return signal; } else { return "HOLD"; }
             } catch (error) {
                 console.error("Error calling OpenAI API:", error);
+                alert("Network Error: OpenAI se connect nahi ho pa raha. Apna internet check karein.");
                 return "HOLD";
             }
         }
