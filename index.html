@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signal Core (OpenAI Edition)</title>
+    <title>Signal Core (Real Image Analysis)</title>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap');
@@ -208,6 +208,7 @@
         
         let isImageReady = false;
         let isTimeSelected = false;
+        let imageBase64Data = null;
 
         // --- UI AND ANIMATION FUNCTIONS ---
         function setLineLength(line) {
@@ -259,16 +260,21 @@
             resetLines();
             const file = event.target.files[0];
             isImageReady = !!file;
-            if (isImageReady) lineUpload.classList.add('line-active');
+            imageBase64Data = null;
+
+            if (isImageReady) {
+                lineUpload.classList.add('line-active');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageBase64Data = e.target.result;
+                    checkFormCompletion();
+                };
+                reader.readAsDataURL(file);
+            }
+            
             timeframeSelect.value = "";
             isTimeSelected = false;
             if (!file) { checkFormCompletion(); return; }
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image(); img.onload = () => { checkFormCompletion(); }; img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
         });
 
         timeframeSelect.addEventListener('change', () => {
@@ -280,10 +286,10 @@
         getSignalBtn.addEventListener('click', async () => {
             getSignalBtn.disabled = true;
             mainInterface.classList.add('analyzing');
-            document.getElementById('analysis-status').textContent = "CONTACTING AI CORE...";
+            document.getElementById('analysis-status').textContent = "AI CORE ANALYZING IMAGE...";
             hackingSound.play();
-
-            const signal = await getOpenAISignal();
+            
+            const signal = await getOpenAISignal(imageBase64Data);
 
             mainInterface.classList.remove('analyzing');
             document.getElementById('analysis-status').textContent = "";
@@ -316,70 +322,69 @@
             resultPanel.style.color = textColor;
         }
 
-        // --- NEW OPENAI SIGNAL GENERATION LOGIC ---
-
-        async function getOpenAISignal() {
-            // !!! IMPORTANT: REPLACE WITH YOUR OWN KEY !!!
-            const apiKey = "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";
+        // --- REAL IMAGE ANALYSIS LOGIC ---
+        async function getOpenAISignal(base64Image) {
+            // !!! AAPKO APNI NAYI WALI KEY YAHAN DAALNI HAI !!!
+            const apiKey = "sk-proj-IqEgjgqDhuRdlgWBr4__SqL_PWZf0IfP_cuJatKtaVSk80GVrAGAQHMdTt7vPmXmj2vQzgjtowT3BlbkFJb3woXowVW2NbxjPjksY3AOhilTrsZR_NE5vJDE1z1FpA95VXt8khOMHf8b1KSie5rM4uIrs74AE";
             
-            if (apiKey === "YOUR_OPENAI_API_KEY_HERE") {
-                console.error("OpenAI API Key is not set.");
-                alert("ERROR: OpenAI API Key is missing. Please add your key to the script.");
+            if (apiKey === "YOUR_NEW_API_KEY_HERE") {
+                alert("ERROR: OpenAI API Key script mein nahi daali gayi.");
                 return "HOLD";
             }
             
-            const apiURL = 'https://api.openai.com/v1/chat/completions';
+            if (!base64Image) {
+                alert("ERROR: Image data nahi mila.");
+                return "HOLD";
+            }
 
-            // We create a very specific prompt to get a clean answer.
-            const prompt = `Analyze the current market sentiment for a generic currency pair for a ${timeframeSelect.value} minute binary options trade. Consider common technical indicators like RSI, MACD, and moving averages. Based on this hypothetical analysis, what is the most likely direction?`;
+            const apiURL = 'https://api.openai.com/v1/chat/completions';
+            const prompt = `Analyze the attached trading chart screenshot. Based on the visible candlesticks, trend, and structure, predict the most likely market direction for the next ${timeframeSelect.value} minute(s). You must only respond with one of three words: UP, DOWN, or HOLD. Do not provide any explanation, extra text, or punctuation.`;
 
             const requestBody = {
-                model: "gpt-3.5-turbo",
+                model: "gpt-4-turbo",
                 messages: [
                     {
-                        "role": "system",
-                        "content": "You are a professional trading analyst. Your task is to predict the market direction. You must only respond with one of three words: UP, DOWN, or HOLD. Do not provide any explanation, extra text, or punctuation."
-                    },
-                    {
                         "role": "user",
-                        "content": prompt
+                        "content": [
+                            { "type": "text", "text": prompt },
+                            { "type": "image_url", "image_url": { "url": base64Image } }
+                        ]
                     }
                 ],
-                temperature: 0.5,
-                max_tokens: 3
+                max_tokens: 5
             };
 
             try {
                 const response = await fetch(apiURL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                     body: JSON.stringify(requestBody)
                 });
 
                 if (!response.ok) {
-                    console.error("OpenAI API Error:", response.status, response.statusText);
-                    return "HOLD"; // Default to HOLD on error
+                    const errorData = await response.json();
+                    if(errorData.error && errorData.error.message.includes("You exceeded your current quota")){
+                        alert("ERROR: Aapke OpenAI account ke credits khatam ho gaye hain. Please check your billing details.");
+                    } else {
+                        alert("ERROR: OpenAI se error mila. Details console mein check karein.");
+                    }
+                    return "HOLD";
                 }
 
                 const data = await response.json();
-                let signal = data.choices[0].message.content.trim().toUpperCase();
+                let signal = data.choices[0].message.content.trim().toUpperCase().replace('.', '');
 
-                // Ensure the response is one of the valid signals
                 if (['UP', 'DOWN', 'HOLD'].includes(signal)) {
                     return signal;
                 } else {
-                    return "HOLD"; // Default if the AI gives an unexpected response
+                    return "HOLD";
                 }
 
             } catch (error) {
                 console.error("Error calling OpenAI API:", error);
-                return "HOLD"; // Default to HOLD on network error
+                return "HOLD";
             }
         }
-
     </script>
 </body>
 </html>
