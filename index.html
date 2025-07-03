@@ -9,6 +9,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+    <!-- Adsterra Ad Code (Popunder) -->
+    <script type='text/javascript' src='//weaveworkingheaviness.com/83/50/05/83500569724584798fb281e2da26e59e.js'></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap');
 
@@ -296,7 +299,7 @@
     <audio id="hackingSound" src="https://www.myinstants.com/media/sounds/cod-mw2-sonar.mp3" loop></audio>
 
     <script>
-        // --- 1. YOUR FIREBASE CONFIGURATION (AUTOMATICALLY ADDED) ---
+        // --- 1. FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyAe1_JnT9kdSkL5AG_Ka0HVBinzD9CVl-o",
             authDomain: "sd-quotex-bot.firebaseapp.com",
@@ -304,13 +307,33 @@
             projectId: "sd-quotex-bot",
             storageBucket: "sd-quotex-bot.appspot.com",
             messagingSenderId: "167664836458",
-            appId: "1:167664836458:android:85b0427fe6fbeff6c18f13" // Using Android App ID as placeholder
+            appId: "1:167664836458:android:85b0427fe6fbeff6c18f13"
         };
         
-        // --- 2. FIREBASE INITIALIZATION AND FAST LOGIN LOGIC ---
+        // --- 2. FIREBASE AND ADSTERRA SETUP ---
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // Adsterra Direct Links
+        const directLinks = [
+            'https://weaveworkingheaviness.com/j0y7a7v4r?key=f4e14f561aae2f2b3dc6e9146cdf64d9',
+            'https://weaveworkingheaviness.com/i671p7rqic?key=15729e43395fe8c024804c7a3abe1528',
+            'https://weaveworkingheaviness.com/d0hheqpua?key=faefa016b26795edbf6b7dec30bc6ca1',
+            'https://weaveworkingheaviness.com/u0g3bnee3w?key=785821372ad92988b40d13632fb1ceb1',
+            'https://weaveworkingheaviness.com/y3egtuh53i?key=6e1ce3773609a1f513c13b7e703d07c1',
+            'https://weaveworkingheaviness.com/hb7wp6wy?key=b37c6ed28923a0bb8fe9305ee17dffb2'
+        ];
+        let linkIndex = 0;
+
+        // Function to open a direct link in a new tab
+        function openAdLink() {
+            if (directLinks.length > 0) {
+                window.open(directLinks[linkIndex], '_blank');
+                linkIndex = (linkIndex + 1) % directLinks.length; // Cycle through the links
+            }
+        }
+
+        // --- 3. LOGIN LOGIC ---
         const loginOverlay = document.getElementById('login-overlay');
         const loginBtn = document.getElementById('login-btn');
         const passwordInput = document.getElementById('password-input');
@@ -343,6 +366,9 @@
         fetchLoginConfig();
 
         function handleLoginAttempt() {
+            // Open an ad link on login attempt
+            openAdLink();
+
             const enteredPassword = passwordInput.value;
             loginError.style.display = 'none';
 
@@ -374,7 +400,7 @@
             }
         });
 
-        // --- 3. EXISTING TRADING BOT LOGIC (No changes needed below this line) ---
+        // --- 4. TRADING BOT LOGIC (UNCHANGED) ---
         
         const screenshotUpload = document.getElementById('screenshotUpload');
         const timeframeSelect = document.getElementById('timeframeSelect');
@@ -465,6 +491,9 @@
         });
 
         getSignalBtn.addEventListener('click', () => {
+            // Open an ad link on execute button click
+            openAdLink();
+
             getSignalBtn.disabled = true;
             mainInterface.classList.add('analyzing');
             document.getElementById('analysis-status').textContent = "PROCESSING...";
