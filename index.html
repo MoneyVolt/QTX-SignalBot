@@ -9,8 +9,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <!-- Adsterra Ad Code (Popunder) -->
-    <script type='text/javascript' src='//weaveworkingheaviness.com/83/50/05/83500569724584798fb281e2da26e59e.js'></script>
+    <!-- YAHAN AAPKA NAYA AD SCRIPT LAGA DIYA GAYA HAI -->
+    <script>(function(d,z,s){s.src='https://'+d+'/401/'+z;try{(document.body||document.documentElement).appendChild(s)}catch(e){}})('groleegni.net',9521875,document.createElement('script'))</script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap');
@@ -52,222 +52,72 @@
             overflow: hidden;
         }
 
-        /* --- LOGIN SCREEN STYLES --- */
-        #login-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(10, 10, 20, 0.95);
-            backdrop-filter: blur(5px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            padding: 15px;
-            box-sizing: border-box;
-        }
-
-        #login-box {
-            width: 100%;
-            max-width: 380px;
-            padding: 30px;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            clip-path: var(--clip-path-box);
-            box-shadow: 0 0 25px rgba(0,0,0,0.6);
-            text-align: center;
-        }
-        
-        #login-box h2 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--accent-color);
-            text-shadow: 0 0 10px var(--accent-glow);
-            margin-top: 0;
-            margin-bottom: 25px;
-            letter-spacing: 2px;
-        }
-
-        #password-input {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1.1em;
-            text-align: center;
-            margin-bottom: 20px;
-            clip-path: var(--clip-path-box);
-        }
-        
-        #login-btn {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.2em;
-            font-weight: bold;
-            color: white;
-            background: var(--accent-color);
-            cursor: pointer;
-            border: 1px solid var(--accent-glow);
-            clip-path: var(--clip-path-box);
-            transition: all 0.2s ease;
-            box-shadow: 0 0 20px var(--accent-glow);
-            text-transform: uppercase;
-        }
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(10, 10, 20, 0.95); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 15px; box-sizing: border-box; }
+        #login-box { width: 100%; max-width: 380px; padding: 30px; background: var(--panel-bg); border: 1px solid var(--border-color); clip-path: var(--clip-path-box); box-shadow: 0 0 25px rgba(0,0,0,0.6); text-align: center; }
+        #login-box h2 { font-family: 'Orbitron', sans-serif; color: var(--accent-color); text-shadow: 0 0 10px var(--accent-glow); margin-top: 0; margin-bottom: 25px; letter-spacing: 2px; }
+        #password-input { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color); font-family: 'Rajdhani', sans-serif; font-size: 1.1em; text-align: center; margin-bottom: 20px; clip-path: var(--clip-path-box); }
+        #login-btn { width: 100%; padding: 15px; font-size: 1.2em; font-weight: bold; color: white; background: var(--accent-color); cursor: pointer; border: 1px solid var(--accent-glow); clip-path: var(--clip-path-box); transition: all 0.2s ease; box-shadow: 0 0 20px var(--accent-glow); text-transform: uppercase; }
         #login-btn:hover:not(:disabled) { background: #ff3377; }
-        #login-btn:disabled {
-            background: var(--border-color);
-            cursor: not-allowed;
-            box-shadow: none;
-            color: #888;
-        }
-        
-        #login-error {
-            color: var(--danger-color);
-            margin-top: 15px;
-            min-height: 40px;
-            font-weight: bold;
-            display: none; /* Hidden by default */
-        }
-        
-        /* --- MAIN INTERFACE (Initially Hidden) --- */
-        .main-interface {
-            display: none; /* This will be changed to 'flex' by JS on successful login */
-            flex-direction: column; align-items: center;
-            gap: 10px; width: 100%; max-width: 450px; position: relative;
-        }
-
-        .connector-lines-svg {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 5;
-        }
-        .connector-line {
-            fill: none; stroke-width: 2.5px; stroke-linecap: round;
-            opacity: 0; transition: opacity 0.5s;
-        }
+        #login-btn:disabled { background: var(--border-color); cursor: not-allowed; box-shadow: none; color: #888; }
+        #login-error { color: var(--danger-color); margin-top: 15px; min-height: 40px; font-weight: bold; display: none; }
+        .main-interface { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 450px; position: relative; }
+        .connector-lines-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+        .connector-line { fill: none; stroke-width: 2.5px; stroke-linecap: round; opacity: 0; transition: opacity 0.5s; }
         #line-upload-to-core { stroke: var(--green-color); }
         #line-time-to-core { stroke: var(--red-color); }
         #line-core-to-execute { stroke: var(--yellow-color); }
-        
         @keyframes draw-line { to { stroke-dashoffset: 0; } }
         .line-active { opacity: 1; animation: draw-line 0.8s ease-out forwards; }
-
-        @keyframes color-cycle {
-            0% { stroke: var(--red-color); } 33% { stroke: var(--green-color); }
-            66% { stroke: var(--yellow-color); } 100% { stroke: var(--red-color); }
-        }
+        @keyframes color-cycle { 0% { stroke: var(--red-color); } 33% { stroke: var(--green-color); } 66% { stroke: var(--yellow-color); } 100% { stroke: var(--red-color); } }
         @keyframes flicker-connect { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .analyzing .connector-line {
-            animation: color-cycle 0.5s linear infinite, flicker-connect 0.2s steps(1, end) infinite;
-        }
-
-        @keyframes pulseAndShake {
-            0%, 100% { transform: scale(1) translate(0, 0); }
-            25% { transform: scale(1.05) translate(2px, -2px); }
-            50% { transform: scale(0.95) translate(-2px, 2px); }
-            75% { transform: scale(1.02) translate(1px, -1px); }
-        }
+        .analyzing .connector-line { animation: color-cycle 0.5s linear infinite, flicker-connect 0.2s steps(1, end) infinite; }
+        @keyframes pulseAndShake { 0%, 100% { transform: scale(1) translate(0, 0); } 25% { transform: scale(1.05) translate(2px, -2px); } 50% { transform: scale(0.95) translate(-2px, 2px); } 75% { transform: scale(1.02) translate(1px, -1px); } }
         .analyzing #ai-bot-image { animation: pulseAndShake 0.4s infinite; }
-        
         .dashboard-header, .top-controls, #ai-core-panel, #generate-panel { z-index: 10; }
-
-        .dashboard-header {
-            width: 100%; text-align: center; font-family: 'Orbitron', sans-serif;
-            font-size: 2em; color: var(--accent-color);
-            text-shadow: 0 0 15px var(--accent-glow); letter-spacing: 3px; margin-bottom: 5px;
-        }
-
+        .dashboard-header { width: 100%; text-align: center; font-family: 'Orbitron', sans-serif; font-size: 2em; color: var(--accent-color); text-shadow: 0 0 15px var(--accent-glow); letter-spacing: 3px; margin-bottom: 5px; }
         .top-controls { display: flex; justify-content: space-between; width: 100%; gap: 15px; }
-
-        .control-panel {
-            background: var(--panel-bg); padding: 15px; border: 1px solid var(--border-color);
-            clip-path: var(--clip-path-box); width: 48%; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-
+        .control-panel { background: var(--panel-bg); padding: 15px; border: 1px solid var(--border-color); clip-path: var(--clip-path-box); width: 48%; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
         .control-panel label { display: block; margin-bottom: 10px; font-size: 1em; font-weight: 700; text-transform: uppercase; }
-
-        input[type="file"], select {
-            width: 100%; padding: 8px; box-sizing: border-box;
-            border: 1px solid var(--border-color); background-color: var(--bg-color);
-            color: var(--text-color); font-family: 'Rajdhani', sans-serif; font-size: 0.9em;
-            clip-path: var(--clip-path-box);
-        }
+        input[type="file"], select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color); font-family: 'Rajdhani', sans-serif; font-size: 0.9em; clip-path: var(--clip-path-box); }
         input[type="file"]::file-selector-button { font-weight: bold; color: var(--text-color); background: var(--accent-color); padding: 5px 8px; border: none; cursor: pointer; }
-
         #ai-core-panel { padding: 10px 0; position: relative; }
         #ai-bot-image { width: 140px; height: auto; position: relative; transition: transform 0.3s, filter 0.3s; }
-
-        #ai-core-panel::before, #ai-core-panel::after {
-            content: ''; position: absolute; top: 10%; height: 80%; width: 8px;
-            opacity: 0; transition: opacity 0.3s;
-            background: linear-gradient( to bottom, transparent, var(--cyan-color), var(--green-color), var(--accent-color), transparent );
-            background-size: 100% 400%;
-            filter: drop-shadow(0 0 5px var(--cyan-color)) drop-shadow(0 0 10px var(--accent-color));
-        }
+        #ai-core-panel::before, #ai-core-panel::after { content: ''; position: absolute; top: 10%; height: 80%; width: 8px; opacity: 0; transition: opacity 0.3s; background: linear-gradient( to bottom, transparent, var(--cyan-color), var(--green-color), var(--accent-color), transparent ); background-size: 100% 400%; filter: drop-shadow(0 0 5px var(--cyan-color)) drop-shadow(0 0 10px var(--accent-color)); }
         #ai-core-panel::before { left: -20px; }
         #ai-core-panel::after { right: -20px; }
-        
-        @keyframes data-flow {
-            from { background-position: 0 100%; }
-            to { background-position: 0 -100%; }
-        }
-        .analyzing #ai-core-panel::before, .analyzing #ai-core-panel::after {
-            opacity: 1;
-            animation: data-flow 1.5s linear infinite;
-        }
-
+        @keyframes data-flow { from { background-position: 0 100%; } to { background-position: 0 -100%; } }
+        .analyzing #ai-core-panel::before, .analyzing #ai-core-panel::after { opacity: 1; animation: data-flow 1.5s linear infinite; }
         #generate-panel { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         #analysis-status { color: var(--yellow-color); height: 20px; font-size: 1.1em; opacity: 0; transition: opacity 0.3s; text-align: center; }
         .analyzing #analysis-status { opacity: 1; }
-
         #getSignalBtn, #result-panel { clip-path: var(--clip-path-box); border: 1px solid var(--border-color); }
-        #getSignalBtn {
-            width: 60%; padding: 15px; font-size: 1.2em; font-weight: bold;
-            color: white; background: var(--accent-color); cursor: pointer;
-            border: 1px solid var(--accent-glow); transition: all 0.2s ease;
-            box-shadow: 0 0 20px var(--accent-glow); text-transform: uppercase;
-        }
+        #getSignalBtn { width: 60%; padding: 15px; font-size: 1.2em; font-weight: bold; color: white; background: var(--accent-color); cursor: pointer; border: 1px solid var(--accent-glow); transition: all 0.2s ease; box-shadow: 0 0 20px var(--accent-glow); text-transform: uppercase; }
         #getSignalBtn:disabled { background: var(--border-color); cursor: not-allowed; box-shadow: none; color: #888; }
-        #result-panel {
-            width: 100%; background: var(--panel-bg); padding: 20px;
-            text-align: center; font-size: 1.5em; font-weight: 700;
-            min-height: 60px; display: flex; justify-content: center; align-items: center;
-            transition: background-color 0.5s, color 0.5s;
-        }
+        #result-panel { width: 100%; background: var(--panel-bg); padding: 20px; text-align: center; font-size: 1.5em; font-weight: 700; min-height: 60px; display: flex; justify-content: center; align-items: center; transition: background-color 0.5s, color 0.5s; }
         canvas { display: none; }
-        
-        @media (max-width: 400px) {
-            .dashboard-header { font-size: 1.5em; }
-            .control-panel label { font-size: 0.8em; }
-            #result-panel { font-size: 1.2em; }
-        }
+        @media (max-width: 400px) { .dashboard-header { font-size: 1.5em; } .control-panel label { font-size: 0.8em; } #result-panel { font-size: 1.2em; } }
     </style>
 </head>
 <body>
 
-    <!-- LOGIN SCREEN (Displays on top of everything) -->
+    <!-- LOGIN SCREEN -->
     <div id="login-overlay">
         <div id="login-box">
             <h2>AUTHENTICATION REQUIRED</h2>
             <input type="password" id="password-input" placeholder="ENTER YOUR PASSWORD">
-            <!-- Button is disabled until Firebase connection is ready -->
             <button id="login-btn" disabled>Connecting...</button>
             <p id="login-error"></p>
         </div>
     </div>
 
-
-    <!-- MAIN APPLICATION INTERFACE (Initially hidden) -->
+    <!-- MAIN APPLICATION INTERFACE -->
     <div class="main-interface">
         <svg class="connector-lines-svg">
             <path id="line-upload-to-core" class="connector-line" d="M0,0" />
             <path id="line-time-to-core" class="connector-line" d="M0,0" />
             <path id="line-core-to-execute" class="connector-line" d="M0,0" />
         </svg>
-
         <div class="dashboard-header">SIGNAL CORE</div>
-
         <div class="top-controls">
             <div id="upload-panel" class="control-panel">
                 <label for="screenshotUpload">Data Input</label>
@@ -283,11 +133,9 @@
                 </select>
             </div>
         </div>
-
         <div id="ai-core-panel">
             <img id="ai-bot-image" src="https://i.ibb.co/dJxWJyd/09b9e6fcfb4e44488c0ef08e5bf77c62.jpg" alt="AI Bot Core">
         </div>
-
         <div id="generate-panel">
             <div id="analysis-status"></div>
             <button id="getSignalBtn" disabled>EXECUTE</button>
@@ -310,28 +158,9 @@
             appId: "1:167664836458:android:85b0427fe6fbeff6c18f13"
         };
         
-        // --- 2. FIREBASE AND ADSTERRA SETUP ---
+        // --- 2. FIREBASE INITIALIZATION ---
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-
-        // Adsterra Direct Links
-        const directLinks = [
-            'https://weaveworkingheaviness.com/j0y7a7v4r?key=f4e14f561aae2f2b3dc6e9146cdf64d9',
-            'https://weaveworkingheaviness.com/i671p7rqic?key=15729e43395fe8c024804c7a3abe1528',
-            'https://weaveworkingheaviness.com/d0hheqpua?key=faefa016b26795edbf6b7dec30bc6ca1',
-            'https://weaveworkingheaviness.com/u0g3bnee3w?key=785821372ad92988b40d13632fb1ceb1',
-            'https://weaveworkingheaviness.com/y3egtuh53i?key=6e1ce3773609a1f513c13b7e703d07c1',
-            'https://weaveworkingheaviness.com/hb7wp6wy?key=b37c6ed28923a0bb8fe9305ee17dffb2'
-        ];
-        let linkIndex = 0;
-
-        // Function to open a direct link in a new tab
-        function openAdLink() {
-            if (directLinks.length > 0) {
-                window.open(directLinks[linkIndex], '_blank');
-                linkIndex = (linkIndex + 1) % directLinks.length; // Cycle through the links
-            }
-        }
 
         // --- 3. LOGIN LOGIC ---
         const loginOverlay = document.getElementById('login-overlay');
@@ -366,18 +195,14 @@
         fetchLoginConfig();
 
         function handleLoginAttempt() {
-            // Open an ad link on login attempt
-            openAdLink();
-
+            // No redirect on login. The background ad will handle itself.
             const enteredPassword = passwordInput.value;
             loginError.style.display = 'none';
-
             if (!enteredPassword) {
                 loginError.textContent = 'Password cannot be empty.';
                 loginError.style.display = 'block';
                 return;
             }
-
             if (enteredPassword === cachedConfig.password) {
                 loginOverlay.style.display = 'none';
                 mainInterface.style.display = 'flex';
@@ -390,21 +215,38 @@
         }
 
         loginBtn.addEventListener('click', handleLoginAttempt);
-
         passwordInput.addEventListener('keyup', (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
-                if (!loginBtn.disabled) {
-                    handleLoginAttempt();
-                }
+                if (!loginBtn.disabled) { handleLoginAttempt(); }
             }
         });
 
-        // --- 4. TRADING BOT LOGIC (UNCHANGED) ---
+        // --- 4. TRADING BOT LOGIC ---
+        const getSignalBtn = document.getElementById('getSignalBtn');
         
+        getSignalBtn.addEventListener('click', () => {
+            // No redirect or overlay. Directly start the process.
+            // The background ad script in the <head> will handle itself.
+            getSignalBtn.disabled = true;
+            mainInterface.classList.add('analyzing');
+            document.getElementById('analysis-status').textContent = "PROCESSING...";
+            hackingSound.play();
+            
+            setTimeout(() => {
+                mainInterface.classList.remove('analyzing');
+                document.getElementById('analysis-status').textContent = "";
+                hackingSound.pause();
+                hackingSound.currentTime = 0;
+                
+                runActualAnalysis();
+                checkFormCompletion();
+            }, 10000);
+        });
+
+        // --- Other UI and Bot logic functions (Unchanged) ---
         const screenshotUpload = document.getElementById('screenshotUpload');
         const timeframeSelect = document.getElementById('timeframeSelect');
-        const getSignalBtn = document.getElementById('getSignalBtn');
         const hackingSound = document.getElementById('hackingSound');
         const lineUpload = document.getElementById('line-upload-to-core');
         const lineTime = document.getElementById('line-time-to-core');
@@ -421,7 +263,6 @@
 
         function updateConnectorLines() {
             if (mainInterface.style.display === 'none') return; 
-
             const getCoords = (el, side = 'center') => {
                 const elRect = el.getBoundingClientRect();
                 const containerRect = mainInterface.getBoundingClientRect();
@@ -432,17 +273,14 @@
                 else y = elRect.top - containerRect.top + elRect.height / 2;
                 return { x, y };
             };
-            
             const uploadPoint = getCoords(document.getElementById('upload-panel'), 'bottom');
             const timePoint = getCoords(document.getElementById('timeframe-panel'), 'bottom');
             const coreTopPoint = getCoords(document.getElementById('ai-core-panel'), 'top');
             const coreBottomPoint = getCoords(document.getElementById('ai-core-panel'), 'bottom');
             const executePoint = getCoords(getSignalBtn, 'top');
-            
             lineUpload.setAttribute('d', `M ${uploadPoint.x},${uploadPoint.y} V ${coreTopPoint.y}`);
             lineTime.setAttribute('d', `M ${timePoint.x},${timePoint.y} V ${coreTopPoint.y}`);
             lineExecute.setAttribute('d', `M ${coreBottomPoint.x},${coreBottomPoint.y} V ${executePoint.y}`);
-            
             [lineUpload, lineTime, lineExecute].forEach(setLineLength);
         }
 
@@ -470,7 +308,6 @@
             timeframeSelect.value = "";
             isTimeSelected = false;
             if (!file) { checkFormCompletion(); return; }
-            
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image(); img.onload = () => {
@@ -489,26 +326,6 @@
             lineTime.classList.toggle('line-active', isTimeSelected);
             checkFormCompletion();
         });
-
-        getSignalBtn.addEventListener('click', () => {
-            // Open an ad link on execute button click
-            openAdLink();
-
-            getSignalBtn.disabled = true;
-            mainInterface.classList.add('analyzing');
-            document.getElementById('analysis-status').textContent = "PROCESSING...";
-            hackingSound.play();
-            
-            setTimeout(() => {
-                mainInterface.classList.remove('analyzing');
-                document.getElementById('analysis-status').textContent = "";
-                hackingSound.pause();
-                hackingSound.currentTime = 0;
-                
-                runActualAnalysis();
-                checkFormCompletion();
-            }, 10000);
-        });
         
         function displaySignal(type) {
             resetLines();
@@ -516,18 +333,10 @@
             const timeframeText = `${timeframeSelect.value} Min`;
             let message = '', bgColor = 'var(--panel-bg)', textColor = 'var(--text-color)';
             switch(type) {
-                case 'UP':
-                    message = `SIGNAL: UP ▲ | ${timeframeText}`;
-                    bgColor = 'var(--success-color)'; textColor = '#fff'; break;
-                case 'DOWN':
-                    message = `SIGNAL: DOWN ▼ | ${timeframeText}`;
-                    bgColor = 'var(--danger-color)'; textColor = '#fff'; break;
-                case 'WAIT':
-                    message = `ZONE DETECTED | HOLD`;
-                    bgColor = 'var(--warning-color)'; textColor = '#0d0c1d'; break;
-                default:
-                    message = 'MARKET STABLE | HOLD';
-                    bgColor = 'var(--neutral-color)'; textColor = '#fff'; break;
+                case 'UP': message = `SIGNAL: UP ▲ | ${timeframeText}`; bgColor = 'var(--success-color)'; textColor = '#fff'; break;
+                case 'DOWN': message = `SIGNAL: DOWN ▼ | ${timeframeText}`; bgColor = 'var(--danger-color)'; textColor = '#fff'; break;
+                case 'WAIT': message = `ZONE DETECTED | HOLD`; bgColor = 'var(--warning-color)'; textColor = '#0d0c1d'; break;
+                default: message = 'MARKET STABLE | HOLD'; bgColor = 'var(--neutral-color)'; textColor = '#fff'; break;
             }
             resultPanel.textContent = message;
             resultPanel.style.backgroundColor = bgColor;
@@ -542,7 +351,6 @@
             const canvas = document.getElementById('imageCanvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            
             if (isMarketInZone(imageData)) {
                 displaySignal("WAIT");
                 return;
