@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signal Core (Advanced Debugging)</title>
+    <title>Signal Core (Password Protected)</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap');
@@ -21,6 +25,8 @@
             --cyan-color: #00ffff;
             --success-color: #10b981;
             --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --neutral-color: #6b7280;
             --clip-path-box: polygon(0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px));
         }
 
@@ -43,8 +49,89 @@
             overflow: hidden;
         }
 
+        /* --- LOGIN SCREEN STYLES --- */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(10, 10, 20, 0.95);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        #login-box {
+            width: 100%;
+            max-width: 380px;
+            padding: 30px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            clip-path: var(--clip-path-box);
+            box-shadow: 0 0 25px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+        
+        #login-box h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-glow);
+            margin-top: 0;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+        }
+
+        #password-input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1em;
+            text-align: center;
+            margin-bottom: 20px;
+            clip-path: var(--clip-path-box);
+        }
+        
+        #login-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            background: var(--accent-color);
+            cursor: pointer;
+            border: 1px solid var(--accent-glow);
+            clip-path: var(--clip-path-box);
+            transition: all 0.2s ease;
+            box-shadow: 0 0 20px var(--accent-glow);
+            text-transform: uppercase;
+        }
+        #login-btn:hover:not(:disabled) { background: #ff3377; }
+        #login-btn:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+            box-shadow: none;
+            color: #888;
+        }
+        
+        #login-error {
+            color: var(--danger-color);
+            margin-top: 15px;
+            min-height: 40px;
+            font-weight: bold;
+            display: none; /* Hidden by default */
+        }
+        
+        /* --- MAIN INTERFACE (Initially Hidden) --- */
         .main-interface {
-            display: flex; flex-direction: column; align-items: center;
+            display: none; /* This will be changed to 'flex' by JS on successful login */
+            flex-direction: column; align-items: center;
             gap: 10px; width: 100%; max-width: 450px; position: relative;
         }
 
@@ -156,6 +243,19 @@
 </head>
 <body>
 
+    <!-- LOGIN SCREEN (Displays on top of everything) -->
+    <div id="login-overlay">
+        <div id="login-box">
+            <h2>AUTHENTICATION REQUIRED</h2>
+            <input type="password" id="password-input" placeholder="ENTER YOUR PASSWORD">
+            <!-- Button is disabled until Firebase connection is ready -->
+            <button id="login-btn" disabled>Connecting...</button>
+            <p id="login-error"></p>
+        </div>
+    </div>
+
+
+    <!-- MAIN APPLICATION INTERFACE (Initially hidden) -->
     <div class="main-interface">
         <svg class="connector-lines-svg">
             <path id="line-upload-to-core" class="connector-line" d="M0,0" />
@@ -182,7 +282,7 @@
         </div>
 
         <div id="ai-core-panel">
-            <img id="ai-bot-image" src="https://i.imgur.com/uSFTJ5h.png" alt="AI Bot Core">
+            <img id="ai-bot-image" src="https://i.ibb.co/dJxWJyd/09b9e6fcfb4e44488c0ef08e5bf77c62.jpg" alt="AI Bot Core">
         </div>
 
         <div id="generate-panel">
@@ -196,7 +296,86 @@
     <audio id="hackingSound" src="https://www.myinstants.com/media/sounds/cod-mw2-sonar.mp3" loop></audio>
 
     <script>
+        // --- 1. YOUR FIREBASE CONFIGURATION (AUTOMATICALLY ADDED) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAe1_JnT9kdSkL5AG_Ka0HVBinzD9CVl-o",
+            authDomain: "sd-quotex-bot.firebaseapp.com",
+            databaseURL: "https://sd-quotex-bot-default-rtdb.firebaseio.com",
+            projectId: "sd-quotex-bot",
+            storageBucket: "sd-quotex-bot.appspot.com",
+            messagingSenderId: "167664836458",
+            appId: "1:167664836458:android:85b0427fe6fbeff6c18f13" // Using Android App ID as placeholder
+        };
+        
+        // --- 2. FIREBASE INITIALIZATION AND FAST LOGIN LOGIC ---
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const loginOverlay = document.getElementById('login-overlay');
+        const loginBtn = document.getElementById('login-btn');
+        const passwordInput = document.getElementById('password-input');
+        const loginError = document.getElementById('login-error');
         const mainInterface = document.querySelector('.main-interface');
+
+        let cachedConfig = null;
+
+        function fetchLoginConfig() {
+            database.ref('config').once('value')
+                .then(snapshot => {
+                    cachedConfig = snapshot.val();
+                    if (!cachedConfig || !cachedConfig.password || !cachedConfig.adminContact) {
+                        loginError.textContent = "Server configuration error.";
+                        loginError.style.display = 'block';
+                        loginBtn.textContent = 'Setup Error';
+                    } else {
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = 'Check In';
+                    }
+                })
+                .catch(error => {
+                    console.error("Firebase connection error:", error);
+                    loginError.textContent = 'Cannot connect to server. Please refresh.';
+                    loginError.style.display = 'block';
+                    loginBtn.textContent = 'Connection Failed';
+                });
+        }
+        
+        fetchLoginConfig();
+
+        function handleLoginAttempt() {
+            const enteredPassword = passwordInput.value;
+            loginError.style.display = 'none';
+
+            if (!enteredPassword) {
+                loginError.textContent = 'Password cannot be empty.';
+                loginError.style.display = 'block';
+                return;
+            }
+
+            if (enteredPassword === cachedConfig.password) {
+                loginOverlay.style.display = 'none';
+                mainInterface.style.display = 'flex';
+                updateConnectorLines(); 
+            } else {
+                loginError.innerHTML = `Password is incorrect.<br>Please contact Admin: ${cachedConfig.adminContact}`;
+                loginError.style.display = 'block';
+                passwordInput.value = '';
+            }
+        }
+
+        loginBtn.addEventListener('click', handleLoginAttempt);
+
+        passwordInput.addEventListener('keyup', (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                if (!loginBtn.disabled) {
+                    handleLoginAttempt();
+                }
+            }
+        });
+
+        // --- 3. EXISTING TRADING BOT LOGIC (No changes needed below this line) ---
+        
         const screenshotUpload = document.getElementById('screenshotUpload');
         const timeframeSelect = document.getElementById('timeframeSelect');
         const getSignalBtn = document.getElementById('getSignalBtn');
@@ -207,112 +386,202 @@
         
         let isImageReady = false;
         let isTimeSelected = false;
-        let imageBase64Data = null;
 
-        function setLineLength(line) { const length = line.getTotalLength(); line.style.strokeDasharray = length; line.style.strokeDashoffset = length; }
+        function setLineLength(line) {
+            const length = line.getTotalLength();
+            line.style.strokeDasharray = length;
+            line.style.strokeDashoffset = length;
+        }
+
         function updateConnectorLines() {
+            if (mainInterface.style.display === 'none') return; 
+
             const getCoords = (el, side = 'center') => {
-                const elRect = el.getBoundingClientRect(); const containerRect = mainInterface.getBoundingClientRect();
-                const x = elRect.left - containerRect.left + elRect.width / 2; let y;
+                const elRect = el.getBoundingClientRect();
+                const containerRect = mainInterface.getBoundingClientRect();
+                const x = elRect.left - containerRect.left + elRect.width / 2;
+                let y;
                 if (side === 'top') y = elRect.top - containerRect.top;
                 else if (side === 'bottom') y = elRect.top - containerRect.top + elRect.height;
                 else y = elRect.top - containerRect.top + elRect.height / 2;
                 return { x, y };
             };
+            
             const uploadPoint = getCoords(document.getElementById('upload-panel'), 'bottom');
             const timePoint = getCoords(document.getElementById('timeframe-panel'), 'bottom');
             const coreTopPoint = getCoords(document.getElementById('ai-core-panel'), 'top');
             const coreBottomPoint = getCoords(document.getElementById('ai-core-panel'), 'bottom');
             const executePoint = getCoords(getSignalBtn, 'top');
+            
             lineUpload.setAttribute('d', `M ${uploadPoint.x},${uploadPoint.y} V ${coreTopPoint.y}`);
             lineTime.setAttribute('d', `M ${timePoint.x},${timePoint.y} V ${coreTopPoint.y}`);
             lineExecute.setAttribute('d', `M ${coreBottomPoint.x},${coreBottomPoint.y} V ${executePoint.y}`);
+            
             [lineUpload, lineTime, lineExecute].forEach(setLineLength);
         }
+
         window.addEventListener('DOMContentLoaded', updateConnectorLines);
         window.addEventListener('resize', updateConnectorLines);
-        function resetLines() { lineUpload.classList.remove('line-active'); lineTime.classList.remove('line-active'); lineExecute.classList.remove('line-active'); }
-        function checkFormCompletion() { getSignalBtn.disabled = !(isImageReady && isTimeSelected); lineExecute.classList.toggle('line-active', isImageReady && isTimeSelected); }
+        
+        function resetLines() {
+            lineUpload.classList.remove('line-active');
+            lineTime.classList.remove('line-active');
+            lineExecute.classList.remove('line-active');
+        }
+
+        function checkFormCompletion() {
+            getSignalBtn.disabled = !(isImageReady && isTimeSelected);
+            lineExecute.classList.toggle('line-active', isImageReady && isTimeSelected);
+        }
+
         screenshotUpload.addEventListener('change', (event) => {
-            resetLines(); const file = event.target.files[0]; isImageReady = !!file; imageBase64Data = null;
+            resetLines();
+            const file = event.target.files[0];
+            isImageReady = !!file;
             if (isImageReady) {
                 lineUpload.classList.add('line-active');
-                const reader = new FileReader();
-                reader.onload = (e) => { imageBase64Data = e.target.result; checkFormCompletion(); };
-                reader.readAsDataURL(file);
             }
-            timeframeSelect.value = ""; isTimeSelected = false; if (!file) { checkFormCompletion(); return; }
+            timeframeSelect.value = "";
+            isTimeSelected = false;
+            if (!file) { checkFormCompletion(); return; }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image(); img.onload = () => {
+                    const canvas = document.getElementById('imageCanvas');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    canvas.width = img.width; canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0); 
+                    checkFormCompletion();
+                }; img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         });
-        timeframeSelect.addEventListener('change', () => { isTimeSelected = !!timeframeSelect.value; lineTime.classList.toggle('line-active', isTimeSelected); checkFormCompletion(); });
-        getSignalBtn.addEventListener('click', async () => {
-            getSignalBtn.disabled = true; mainInterface.classList.add('analyzing');
-            document.getElementById('analysis-status').textContent = "AI CORE ANALYZING IMAGE...";
+
+        timeframeSelect.addEventListener('change', () => {
+            isTimeSelected = !!timeframeSelect.value;
+            lineTime.classList.toggle('line-active', isTimeSelected);
+            checkFormCompletion();
+        });
+
+        getSignalBtn.addEventListener('click', () => {
+            getSignalBtn.disabled = true;
+            mainInterface.classList.add('analyzing');
+            document.getElementById('analysis-status').textContent = "PROCESSING...";
             hackingSound.play();
-            const signal = await getOpenAISignal(imageBase64Data);
-            mainInterface.classList.remove('analyzing'); document.getElementById('analysis-status').textContent = "";
-            hackingSound.pause(); hackingSound.currentTime = 0;
-            displaySignal(signal); checkFormCompletion();
+            
+            setTimeout(() => {
+                mainInterface.classList.remove('analyzing');
+                document.getElementById('analysis-status').textContent = "";
+                hackingSound.pause();
+                hackingSound.currentTime = 0;
+                
+                runActualAnalysis();
+                checkFormCompletion();
+            }, 10000);
         });
+        
         function displaySignal(type) {
-            resetLines(); const resultPanel = document.getElementById('result-panel'); const timeframeText = `${timeframeSelect.value} Min`;
+            resetLines();
+            const resultPanel = document.getElementById('result-panel');
+            const timeframeText = `${timeframeSelect.value} Min`;
             let message = '', bgColor = 'var(--panel-bg)', textColor = 'var(--text-color)';
             switch(type) {
-                case 'UP': message = `SIGNAL: UP ▲ | ${timeframeText}`; bgColor = 'var(--success-color)'; textColor = '#fff'; break;
-                case 'DOWN': message = `SIGNAL: DOWN ▼ | ${timeframeText}`; bgColor = 'var(--danger-color)'; textColor = '#fff'; break;
-                case 'HOLD': default: message = 'MARKET STABLE | HOLD'; bgColor = 'var(--yellow-color)'; textColor = '#0d0c1d'; break;
+                case 'UP':
+                    message = `SIGNAL: UP ▲ | ${timeframeText}`;
+                    bgColor = 'var(--success-color)'; textColor = '#fff'; break;
+                case 'DOWN':
+                    message = `SIGNAL: DOWN ▼ | ${timeframeText}`;
+                    bgColor = 'var(--danger-color)'; textColor = '#fff'; break;
+                case 'WAIT':
+                    message = `ZONE DETECTED | HOLD`;
+                    bgColor = 'var(--warning-color)'; textColor = '#0d0c1d'; break;
+                default:
+                    message = 'MARKET STABLE | HOLD';
+                    bgColor = 'var(--neutral-color)'; textColor = '#fff'; break;
             }
-            resultPanel.textContent = message; resultPanel.style.backgroundColor = bgColor; resultPanel.style.color = textColor;
+            resultPanel.textContent = message;
+            resultPanel.style.backgroundColor = bgColor;
+            resultPanel.style.color = textColor;
         }
 
-        async function getOpenAISignal(base64Image) {
-            const apiKey = "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";
+        const ZONE_THRESHOLD = 0.003;
+        const SLOPE_THRESHOLD = 0.25;
+        const ANALYSIS_SLICES = 15;
+
+        function runActualAnalysis() {
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             
-            if (apiKey === "YOUR_NEW_API_KEY_HERE") {
-                alert("ERROR: OpenAI API Key script mein nahi daali gayi.");
-                return "HOLD";
+            if (isMarketInZone(imageData)) {
+                displaySignal("WAIT");
+                return;
             }
-            if (!base64Image) { alert("ERROR: Image data nahi mila."); return "HOLD"; }
+            const trend = detectTrend(imageData);
+            displaySignal(trend);
+        }
 
-            const apiURL = 'https://api.openai.com/v1/chat/completions';
-            const prompt = `Analyze the attached trading chart screenshot. Based on the visible candlesticks, trend, and structure, predict the most likely market direction for the next ${timeframeSelect.value} minute(s). You must only respond with one of three words: UP, DOWN, or HOLD. Do not provide any explanation, extra text, or punctuation.`;
-            const requestBody = {
-                model: "gpt-4-turbo",
-                messages: [ { "role": "user", "content": [ { "type": "text", "text": prompt }, { "type": "image_url", "image_url": { "url": base64Image } } ] } ],
-                max_tokens: 5
-            };
+        function isGreen(r, g, b) { return g > r && g > b && g > 90 && r < 120 && b < 120; }
+        function isRed(r, g, b) { return r > g && r > b && r > 90 && g < 120 && b < 120; }
 
-            try {
-                const response = await fetch(apiURL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                    body: JSON.stringify(requestBody)
-                });
+        function isMarketInZone(imageData) {
+            const { data, width, height } = imageData;
+            const bandHeight = 15;
+            for (let y = Math.floor(height / 4); y < Math.floor(height * 3 / 4); y += bandHeight) {
+                let redCount = 0, greenCount = 0;
+                for (let bandY = y; bandY < y + bandHeight; bandY++) {
+                    for (let x = Math.floor(width / 2); x < width; x++) {
+                        const i = (bandY * width + x) * 4;
+                        if (isGreen(data[i], data[i + 1], data[i + 2])) greenCount++;
+                        if (isRed(data[i], data[i + 1], data[i + 2])) redCount++;
+                    }
+                }
+                const totalPixelsInBand = (width / 2) * bandHeight;
+                if (redCount / totalPixelsInBand > ZONE_THRESHOLD && greenCount / totalPixelsInBand > ZONE_THRESHOLD) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    let errorMessage = "OpenAI se ajeeb error mila. Details console mein check karein.";
-                    if (errorData.error && errorData.error.message) {
-                        if (errorData.error.message.includes("You exceeded your current quota")) {
-                            errorMessage = "ERROR: Aapke OpenAI account ke credits khatam ho gaye hain. Please check your billing details.";
-                        } else if (errorData.error.code === 'invalid_api_key') {
-                            errorMessage = "ERROR: API Key ghalat hai ya kaam nahi kar rahi. Ek nayi key bana kar check karein.";
-                        } else {
-                            errorMessage = `OpenAI Error: ${errorData.error.message}`;
+        function detectTrend(imageData) {
+            const { data, width, height } = imageData;
+            const points = [];
+            const startX = Math.floor(width / 2);
+            const sliceWidth = (width - startX) / ANALYSIS_SLICES;
+            for (let i = 0; i < ANALYSIS_SLICES; i++) {
+                const sliceX = startX + (i * sliceWidth);
+                let ySum = 0, pixelCount = 0;
+                for (let y = 0; y < height; y++) {
+                    for (let x = Math.floor(sliceX); x < sliceX + sliceWidth; x++) {
+                        const pixelIndex = (y * width + x) * 4;
+                        const [r, g, b] = [data[pixelIndex], data[pixelIndex + 1], data[pixelIndex + 2]];
+                        if (isGreen(r, g, b) || isRed(r, g, b)) {
+                            ySum += y;
+                            pixelCount++;
                         }
                     }
-                    alert(errorMessage);
-                    return "HOLD";
                 }
-
-                const data = await response.json();
-                let signal = data.choices[0].message.content.trim().toUpperCase().replace('.', '');
-                if (['UP', 'DOWN', 'HOLD'].includes(signal)) { return signal; } else { return "HOLD"; }
-            } catch (error) {
-                console.error("Error calling OpenAI API:", error);
-                alert("Network Error: OpenAI se connect nahi ho pa raha. Apna internet check karein.");
-                return "HOLD";
+                if (pixelCount > 0) points.push({ x: i, y: ySum / pixelCount });
             }
+            if (points.length < ANALYSIS_SLICES / 2) return "SIDEWAYS";
+            
+            const slope = linearRegression(points);
+            if (slope > SLOPE_THRESHOLD) return "DOWN";
+            if (slope < -SLOPE_THRESHOLD) return "UP";
+            return "SIDEWAYS";
         }
+
+        function linearRegression(points) {
+            let n = points.length, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            for (const p of points) {
+                sumX += p.x; sumY += p.y; sumXY += p.x * p.y; sumXX += p.x * p.x;
+            }
+            const denominator = (n * sumXX) - (sumX * sumX);
+            return denominator === 0 ? 0 : ((n * sumXY) - (sumX * sumY)) / denominator;
+        }
+
     </script>
 </body>
 </html>
